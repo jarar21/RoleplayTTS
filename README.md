@@ -1,13 +1,13 @@
-# RoleplayAI
+# RoleplayTTS
 
-RoleplayAI is a Python script that leverages TikTok's Text-to-Speech (TTS) API to convert dialogues stored in a text document into audio files using various voices available on TikTok. This script facilitates the creation of immersive role-playing scenarios or story narratives by generating audio dialogues.
+RoleplayTTS is a Python script that leverages TikTok's Text-to-Speech (TTS) API to convert dialogues stored in a text document into audio files using various voices available on TikTok. This script facilitates the creation of immersive role-playing scenarios or story narratives by generating audio dialogues.
 
 ## Installation;
 
 1. Clone this repository to your local machine:
 
    ```bash;
-   git clone https://github.com/jarar21/RoleplayAI.git
+   git clone https://github.com/jarar21/RoleplayTTS.git
 
 2. Install the required Python packages:
 
@@ -20,10 +20,10 @@ RoleplayAI is a Python script that leverages TikTok's Text-to-Speech (TTS) API t
 
    Example `dialogues.txt
 
-2. Run the Python script `roleplay_ai.py`:
+2. Run the Python script `roleplay_TTS.py`:
 
    ```bash
-   python roleplay_ai.py
+   python roleplay_TTS.py
 
 3. The script will process the input file, generate audio files for each dialogue using the specified voices (DAN or GPT), and merge them into a single output file named `merged_audio.mp3`.;
 
