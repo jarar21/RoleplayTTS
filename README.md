@@ -35,7 +35,6 @@ RoleplayTTS is a Python script that leverages TikTok's Text-to-Speech (TTS) API 
 ## Additional Notes;
 
 - The script utilizes TikTok's TTS API to generate audio files. Make sure you have a valid TikTok session ID configured in the `config.ini` file.;
-- If a line in the input file does not start with "DAN:" or "GPT:", it will use the "en_female_ht_f08_wonderful_world" voice to generate the audio.;
 
 ## Credits;
 
