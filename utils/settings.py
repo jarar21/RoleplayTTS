@@ -9,6 +9,6 @@ config = {
         "tiktok_voice": "",
         "tiktok_sessionid": "",#Add your tiktok session id here
         "silence_duration": 0.3,
-        "no_emojis": False
+        "audio_speed": 1.5,
     }
 }

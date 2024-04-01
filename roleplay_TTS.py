@@ -7,7 +7,7 @@ import requests
 from pydub import AudioSegment
 import os
 from utils.utils import check_ratelimit, sleep_until, sanitize_text  # Importing functions from utils.py
-from utils.tiktok_voices import disney_voices, eng_voices, non_eng_voices
+from utils.tiktok_voices import disney_voices, eng_voices, non_eng_voices, vocals
 
 class TikTokTTSException(Exception):
     def __init__(self, code: int, message: str):
@@ -72,22 +72,22 @@ class TikTok:
             out.write(decoded_voices)
 
     def get_voice_by_name(self, voice_name: str) -> str:
-    # Check if the voice name matches any of the predefined voices
-     if voice_name.lower() == "dan":
-        if config["tts"]["random_voice"]:
-            return random.choice(disney_voices + eng_voices + non_eng_voices)
+        # Check if the voice name matches any of the predefined voices
+        if voice_name.lower() == "dan":
+            if config["tts"]["random_voice"]:
+                return random.choice(disney_voices + eng_voices + non_eng_voices)
+            else:
+                return config["tts"]["dan_voice"]  # Ghost Host for DAN
+        elif voice_name.lower() == "gpt":
+            if config["tts"]["random_voice"]:
+                return random.choice(disney_voices + eng_voices + non_eng_voices)
+            else:
+                return config["tts"]["gpt_voice"]  # Rocket for GPT
         else:
-            return config["tts"]["dan_voice"]  # Ghost Host for DAN
-     elif voice_name.lower() == "gpt":
-        if config["tts"]["random_voice"]:
-            return random.choice(disney_voices + eng_voices + non_eng_voices)
-        else:
-            return config["tts"]["gpt_voice"]  # Rocket for GPT
-     else:
-        if config["tts"]["random_voice"]:
-            return random.choice(disney_voices + eng_voices + non_eng_voices)
-        else:
-            return config["tts"]["ending_vocals"]  # Rocket for GPT
+            if config["tts"]["random_voice"]:
+                return random.choice(vocals)
+            else:
+                return config["tts"]["ending_vocals"]  # Rocket for GPT
         
 
 # Read input file and process each line
@@ -134,6 +134,7 @@ def process_file(input_file, dan_folder, gpt_folder):
 # Merge DAN and GPT audios
 def merge_audios(dan_folder, gpt_folder, output_file):
     merged_audio = None
+    audio_speed = config["tts"]["audio_speed"]  # Get audio speed from config
     for dan_file, gpt_file in zip(sorted(os.listdir(dan_folder)), sorted(os.listdir(gpt_folder))):
         dan_audio = AudioSegment.from_file(f"{dan_folder}/{dan_file}", format="mp3")
         gpt_audio = AudioSegment.from_file(f"{gpt_folder}/{gpt_file}", format="mp3")
@@ -141,6 +142,11 @@ def merge_audios(dan_folder, gpt_folder, output_file):
             merged_audio = dan_audio + gpt_audio
         else:
             merged_audio += dan_audio + gpt_audio
+    
+    # Adjust speed if specified in config
+    if audio_speed != 1.0:
+        merged_audio = merged_audio.speedup(playback_speed=audio_speed)
+    
     # Export merged audio
     if merged_audio:
         merged_audio.export(output_file, format="mp3")
