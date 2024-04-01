@@ -14,6 +14,8 @@ RoleplayTTS is a Python script that leverages TikTok's Text-to-Speech (TTS) API 
    ```bash;
    pip install -r requirements.txt
 
+3. Update your Tiktok SessionID in `settings.py`
+
 ## Usage
 
 1. Prepare an input text file named `dialogues.txt` containing the dialogues you want to convert to audio. Each dialogue should start with either "DAN:" or "GPT:" followed by the text. line should be seperated by;
