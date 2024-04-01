@@ -6,9 +6,6 @@ RoleplayTTS is a Python script that leverages TikTok's Text-to-Speech (TTS) API 
 
 1. Clone this repository to your local machine:
 
-   ```bash;
-   git clone https://github.com/jarar21/RoleplayTTS.git
-
 2. Install the required Python packages:
 
    ```bash;
