@@ -6,61 +6,8 @@ from utils.settings import config
 import requests
 from pydub import AudioSegment
 import os
-
-# Define the voice tuples
-disney_voices: Final[tuple] = (
-    "en_us_ghostface",  # Ghost Face
-    "en_us_chewbacca",  # Chewbacca
-    "en_us_c3po",  # C3PO
-    "en_us_stitch",  # Stitch
-    "en_us_stormtrooper",  # Stormtrooper
-    "en_us_rocket",  # Rocket
-    "en_female_madam_leota",  # Madame Leota
-    "en_male_ghosthost",  # Ghost Host
-    "en_male_pirate",  # pirate
-)
-
-eng_voices: Final[tuple] = (
-    "en_au_001",  # English AU - Female
-    "en_au_002",  # English AU - Male
-    "en_uk_001",  # English UK - Male 1
-    "en_uk_003",  # English UK - Male 2
-    "en_us_001",  # English US - Female (Int. 1)
-    "en_us_002",  # English US - Female (Int. 2)
-    "en_us_006",  # English US - Male 1
-    "en_us_007",  # English US - Male 2
-    "en_us_009",  # English US - Male 3
-    "en_us_010",  # English US - Male 4
-    "en_male_narration",  # Narrator
-    "en_male_funny",  # Funny
-    "en_female_emotional",  # Peaceful
-    "en_male_cody",  # Serious
-)
-
-non_eng_voices: Final[tuple] = (
-    # Western European voices
-    "fr_001",  # French - Male 1
-    "fr_002",  # French - Male 2
-    "de_001",  # German - Female
-    "de_002",  # German - Male
-    "es_002",  # Spanish - Male
-    "it_male_m18",  # Italian - Male
-    # South american voices
-    "es_mx_002",  # Spanish MX - Male
-    "br_001",  # Portuguese BR - Female 1
-    "br_003",  # Portuguese BR - Female 2
-    "br_004",  # Portuguese BR - Female 3
-    "br_005",  # Portuguese BR - Male
-    # asian voices
-    "id_001",  # Indonesian - Female
-    "jp_001",  # Japanese - Female 1
-    "jp_003",  # Japanese - Female 2
-    "jp_005",  # Japanese - Female 3
-    "jp_006",  # Japanese - Male
-    "kr_002",  # Korean - Male 1
-    "kr_003",  # Korean - Female
-    "kr_004",  # Korean - Male 2
-)
+from utils.utils import check_ratelimit, sleep_until, sanitize_text  # Importing functions from utils.py
+from utils.tiktok_voices import disney_voices, eng_voices, non_eng_voices
 
 class TikTokTTSException(Exception):
     def __init__(self, code: int, message: str):
@@ -95,7 +42,7 @@ class TikTok:
         # Get the voice from the provided name
         voice = self.get_voice_by_name(voice_name)
         # Sanitize text
-        text = text.replace("+", "plus").replace("&", "and").replace("r/", "")
+        text = sanitize_text(text)  # Using sanitize_text from utils.py
         # Prepare url request
         params = {"req_text": text, "speaker_map_type": 0, "aid": 1233}
         if voice is not None:
@@ -103,6 +50,8 @@ class TikTok:
         # Send request
         try:
             response = self._session.post(self.URI_BASE, params=params)
+            if not check_ratelimit(response):  # Check and handle ratelimit
+                return
         except ConnectionError:
             time.sleep(random.randrange(1, 7))
             response = self._session.post(self.URI_BASE, params=params)
@@ -123,13 +72,23 @@ class TikTok:
             out.write(decoded_voices)
 
     def get_voice_by_name(self, voice_name: str) -> str:
-        # Check if the voice name matches any of the predefined voices
-        if voice_name.lower() == "dan":
-            return "en_us_ghostface"  # Ghost Host for DAN
-        elif voice_name.lower() == "gpt":
-            return "en_us_rocket"  # Rocket for GPT
+    # Check if the voice name matches any of the predefined voices
+     if voice_name.lower() == "dan":
+        if config["tts"]["random_voice"]:
+            return random.choice(disney_voices + eng_voices + non_eng_voices)
         else:
-            return "en_female_ht_f08_wonderful_world"
+            return config["tts"]["dan_voice"]  # Ghost Host for DAN
+     elif voice_name.lower() == "gpt":
+        if config["tts"]["random_voice"]:
+            return random.choice(disney_voices + eng_voices + non_eng_voices)
+        else:
+            return config["tts"]["gpt_voice"]  # Rocket for GPT
+     else:
+        if config["tts"]["random_voice"]:
+            return random.choice(disney_voices + eng_voices + non_eng_voices)
+        else:
+            return config["tts"]["ending_vocals"]  # Rocket for GPT
+        
 
 # Read input file and process each line
 def process_file(input_file, dan_folder, gpt_folder):
@@ -139,6 +98,8 @@ def process_file(input_file, dan_folder, gpt_folder):
     with open(input_file, 'r') as file:
         lines = file.readlines()
     for line in lines:
+        if not line.strip():
+            continue  # Skip empty lines
         if line.startswith('DAN'):
             voice_input = 'dan'
             text_input = line.strip('DAN:').strip()  # Remove 'DAN:' and leading/trailing whitespaces
@@ -187,16 +148,19 @@ def merge_audios(dan_folder, gpt_folder, output_file):
 
 # Example usage
 if __name__ == "__main__":
-    input_file_path = 'dialogues.txt'
-    dan_folder_path = 'DAN_VOICES'
-    gpt_folder_path = 'GPT_VOICES'
-    output_file_path = 'merged_audio.mp3'
+    scene_name = input("Enter the scene name: ")
+    scene_folder_path = f"{scene_name} Scene"
+    dan_folder_path = f"{scene_folder_path}/dan_voice"
+    gpt_folder_path = f"{scene_folder_path}/gpt_voice"
+    output_file_path = f"{scene_folder_path}/{scene_name}_merged_audio.mp3"
 
-    # Create DAN_VOICES and GPT_VOICES folders if they don't exist
+    # Create scene folder if it doesn't exist
+    os.makedirs(scene_folder_path, exist_ok=True)
     os.makedirs(dan_folder_path, exist_ok=True)
     os.makedirs(gpt_folder_path, exist_ok=True)
 
     # Process input file
+    input_file_path = 'dialogues.txt'
     process_file(input_file_path, dan_folder_path, gpt_folder_path)
 
     # Merge DAN and GPT audios
